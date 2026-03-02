@@ -6,30 +6,28 @@
 
 Este proyecto tiene como propósito principal extraer de manera estructurada y automatizada la información normativa más reciente proveniente de las entidades gubernamentales clave en Colombia. 
 
-Genera de manera automatizada archivos de texto plano (`.txt`) listos para ser procesados, analizados o integrados en sistemas de validación legal para empresas colombianas.
+El sistema es capaz de generar de manera automatizada archivos de texto plano (`.txt`) y descargar los **documentos originales en crudo** (`.pdf`, `.docx`) listos para ser procesados, analizados o integrados en sistemas de validación legal e IAs para empresas colombianas.
 
 ## 🚀 Fuentes de Extracción
-El scraper está diseñado para obtener documentos actualizados de las siguientes fuentes oficiales:
+El scraper está diseñado para obtener iterativamente y en profundidad los documentos actualizados de las siguientes fuentes oficiales:
 
-- 🏛️ **[Secretaría del Senado](http://www.secretariasenado.gov.co/senado/basedoc/arbol/1000.html)**: Leyes, Decretos y normatividad general.
-- 💼 **[Ministerio del Trabajo](https://www.mintrabajo.gov.co/web/guest/inicio)**: Políticas laborales, resoluciones y normativas de contratación.
-- 🏥 **[Ministerio de Salud y Protección Social](https://www.minsalud.gov.co/Portada/index.html)**: Resoluciones y normativas de salud pública.
-- 💊 **[INVIMA](https://www.invima.gov.co/)**: Resoluciones, alertas y regulaciones del sector farmacéutico y alimentario.
+- 🏛️ **[Secretaría del Senado](http://www.secretariasenado.gov.co/senado/basedoc/arbol/1000.html)**: Leyes, Decretos y normatividad general. *(Extracción recursiva en árbol de directorios)*
+- 💼 **[Ministerio del Trabajo](https://www.mintrabajo.gov.co/web/guest/inicio)**: Políticas laborales, resoluciones y normativas de contratación. *(Extracción con paginación en sub-directorios)*
+- 🏥 **[Ministerio de Salud y Protección Social](https://www.minsalud.gov.co/Normatividad/Paginas/Resoluciones.aspx)**: Resoluciones y normativas de salud pública. *(Descarga directa multipágina)*
+- 💊 **[INVIMA](https://www.invima.gov.co/normatividad)**: Resoluciones, alertas y regulaciones del sector farmacéutico y alimentario. *(Scraping de aplicaciones dinámicas DOM renderizadas)*
 
-## 🛠️ Tecnologías y Buenas Prácticas
-Este proyecto está desarrollado íntegramente en **JavaScript** (Node.js) utilizando librerías robustas de scraping (como Puppeteer o Cheerio, dependiendo de la necesidad de renderizado del sitio web). 
+## 🛠️ Tecnologías y Arquitectura
+Este proyecto está desarrollado íntegramente en **JavaScript** (Node.js) utilizando librerías robustas de scraping (Puppeteer y Cheerio) y estrategias avanzadas para Crawling e indexación de documentos.
+
+### Arquitectura de Extracción a Gran Escala (V2)
+- 💾 **Gestión de Estado y Caché (Registry)**: Integra un administrador de descargas persistente (`registry.json`) que registra cada URL analizada y descargada. Esto permite detener, pausar o enfrentar fallas de red **reanudando la extracción directamente desde el punto exacto donde falló**, sin descargas redundantes.
+- 📂 **Multi-Formato**: Análisis inteligente de `Content-Type` para guardar el archivo binario crudo (`PDF`, `DOCX`) siempre que esté disponible, reservando el procesamiento web scraping HTML para generar archivos de texto plano (`.txt`).
+- 🤖 **Deep Crawling**: Cada módulo navega de forma autónoma a lo largo de docenas de páginas de paginación (`MinTrabajo`, `MinSalud`, `Invima`), y profundiza de manera recursiva (DFS) en directorios jerárquicos (`Senado`).
 
 ### Criterios de Scraping Ético Implementados:
 - **Control de Peticiones (`Rate Limiting`)**: Pausas aleatorias y tiempos de espera controlados entre solicitudes para no saturar los servidores gubernamentales.
-- **Rotación de User-Agents**: Simulación de navegación orgánica para evitar bloqueos y baneos temporales.
-- **Manejo de Errores y Reintentos (Retries)**: Sistema resiliente que maneja respuestas 4xx o 5xx sin afectar la ejecución general ni impactar a los servidores.
-- **Caché y Verificación de Duplicados**: Prevención de descargas redundantes, garantizando la optimización de ancho de banda propio y de terceros.
-
-## 📋 Estado del Proyecto (Roadmap)
-- [x] Configuración del entorno base y `package.json`.
-- [x] Implementación de la capa de control de concurrencia y peticiones.
-- [x] Desarrollo de los parsers específicos por cada entidad (Senado, MinTrabajo, MinSalud e Invima).
-- [x] Módulo de exportación, normalización y guardado en archivos en `.txt`.
+- **Rotación de User-Agents**: Simulación de navegación orgánica.
+- **Manejo de Errores y Reintentos**: Sistema resiliente (`fetchWithRetry`) que maneja respuestas intermitentes de red con *Exponential Backoff*.
 
 ## ⚙️ Requisitos e Instalación
 
@@ -44,7 +42,7 @@ Este proyecto está desarrollado íntegramente en **JavaScript** (Node.js) utili
    ```bash
    npm install
    ```
-   *Nota: Dado que el proyecto usa Puppeteer, la instalación descargará un navegador Chromium de forma automática.*
+   *Nota: La instalación descargará un navegador Chromium de forma automática para la simulación de usuario de Puppeteer.*
 
 ## 🚀 Uso
 
@@ -55,7 +53,8 @@ node src/index.js
 ```
 
 ### ¿Qué sucederá?
-1. El script inicializará la recolección de manera secuencial (por defecto, configurada para no saturar tu red local ni los servidores destino).
-2. Podrás monitorear el progreso a través de la consola gracias a `Winston Logger`.
-3. Todos los documentos extraídos como texto puro `.txt` se guardarán automáticamente en la carpeta `output/` (la cual es ignorada en Git de manera intencional), organizados por la entidad gubernamental de origen.
-4. Se generarán logs detallados del proceso en `output/scraper.log` y `output/error.log`.
+1. El script inicializará la recolección masiva de manera iterativa y paralizada controladamente. *(Aviso: Dado que respetamos la capacidad de los servidores nacionales, una extracción limpia desde 0 puede durar varias horas)*.
+2. Podrás monitorear el progreso a través de tu terminal gracias al `Logger` de Winston.
+3. El estado de la extracción se autoguardará constantemente; puedes finalizar el proceso en cualquier momento con `Ctrl + C` de manera segura.
+4. Los documentos `.pdf`, `.docx` y `.txt` descubiertos se organizarán impecablemente en la carpeta `output/{entidad}/` garantizando nombres limpios y normalizados.
+5. Los logs de historial se persistirán en `output/scraper.log` y `output/error.log`.
