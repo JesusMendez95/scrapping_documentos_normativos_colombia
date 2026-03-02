@@ -10,60 +10,89 @@ const logger = require('./logger');
  * @returns {string} Nombre asaneado
  */
 function sanitizeFileName(fileName) {
+    if (!fileName) return `doc_${Date.now()}`;
     return fileName
         .trim()
         .toLowerCase()
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remueve acentos
         .replace(/[^a-z0-9]/g, '_') // Reemplaza caracteres no alfanuméricos por guiones bajos
         .replace(/_+/g, '_') // Colapsa múltiples guiones bajos en uno solo
-        .substring(0, 150); // Limita la longitud
+        .replace(/_$/g, '')  // Remueve guion bajo al final si quedó
+        .substring(0, 150) || `doc_${Date.now()}`; // Limita la longitud y previene vacíos
 }
 
 /**
- * Guarda contenido de texto en un archivo plano (.txt) dentro de la carpeta correspondiente a la entidad.
- * Crea los directorios si no existen.
- * 
- * @param {string} entityName Nombre de la entidad (ej: 'senado', 'mintrabajo')
- * @param {string} rawFileName Nombre base del archivo (ej: 'Resolucion 123 de 2024')
- * @param {string} content El texto plano a guardar
- * @returns {boolean} True si se guardó con éxito, False si hubo error
+ * Asegura la creación del directorio para una entidad y retorna su ruta.
+ */
+function ensureEntityDirectory(entityName) {
+    const safeEntity = sanitizeFileName(entityName);
+    const outputDir = path.join(__dirname, '../../output', safeEntity);
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+        logger.info(`📁 Directorio de entidad verificado/creado: ${outputDir}`);
+    }
+    return outputDir;
+}
+
+/**
+ * Guarda contenido de texto en un archivo plano (.txt).
  */
 function saveTextDocument(entityName, rawFileName, content) {
     try {
         if (!content || content.trim().length === 0) {
-            logger.info(`El contenido para ${rawFileName} (${entityName}) está vacío. Se omite guardado.`);
+            logger.info(`El contenido para ${rawFileName} (${entityName}) está vacío. Se omite guardado txt.`);
             return false;
         }
 
-        const safeEntity = sanitizeFileName(entityName);
+        const outputDir = ensureEntityDirectory(entityName);
         const safeFileBase = sanitizeFileName(rawFileName);
-
-        // La ruta final: output/senado/resolucion_123_de_2024.txt
-        // Corrección: Usar la carpeta 'output' en la raíz del proyecto
-        const outputDir = path.join(__dirname, '../../output', safeEntity);
         const filePath = path.join(outputDir, `${safeFileBase}.txt`);
 
-        // Crear la carpeta si no existe (recursive: true maneja carpetas anidadas de forma segura)
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-            logger.info(`📁 Directorio creado: ${outputDir}`);
-        }
-
-        // Si el archivo ya existe, podríamos omitirlo o sobreescribirlo. Por ahora lo sobreescribimos.
         const isExists = fs.existsSync(filePath);
-
         fs.writeFileSync(filePath, content, 'utf-8');
 
-        logger.info(`✅ Archivo ${isExists ? 'actualizado' : 'guardado'} exitosamente: ${filePath}`);
+        logger.info(`✅ Archivo TXT ${isExists ? 'actualizado' : 'guardado'} exitosamente: ${safeFileBase}.txt`);
         return true;
-
     } catch (error) {
-        logger.error(`❌ Error al guardar el documento ${rawFileName} de ${entityName}: ${error.message}`);
+        logger.error(`❌ Error al guardar el txt de ${rawFileName} (${entityName}): ${error.message}`);
+        return false;
+    }
+}
+
+/**
+ * Guarda un archivo binario/crudo (Stream o Buffer) como PDF, DOCX, ZIP, etc.
+ * 
+ * @param {string} entityName Nombre de la entidad (ej: 'mintrabajo')
+ * @param {string} rawFileName Nombre base deseado
+ * @param {string} extension Extensión del archivo incluyendo el punto (ej: '.pdf')
+ * @param {Buffer|stream} fileData Los datos a escribir
+ * @returns {boolean}
+ */
+function saveRawFile(entityName, rawFileName, extension, fileData) {
+    try {
+        const outputDir = ensureEntityDirectory(entityName);
+        const safeFileBase = sanitizeFileName(rawFileName);
+
+        // Asegurarse de que no dupliquemos la extensión (ej: archivo_pdf.pdf)
+        const cleanBase = safeFileBase.endsWith(extension.replace('.', ''))
+            ? safeFileBase.substring(0, safeFileBase.lastIndexOf('_'))
+            : safeFileBase;
+
+        const filePath = path.join(outputDir, `${cleanBase}${extension}`);
+
+        const isExists = fs.existsSync(filePath);
+        fs.writeFileSync(filePath, fileData); // Funciona bien con Buffers o Cadenas
+
+        logger.info(`💾 Archivo BINARIO (${extension.toUpperCase()}) guardado exitosamente: ${cleanBase}${extension}`);
+        return true;
+    } catch (error) {
+        logger.error(`❌ Error al guardar el archivo binario ${rawFileName}${extension}: ${error.message}`);
         return false;
     }
 }
 
 module.exports = {
     saveTextDocument,
+    saveRawFile,
     sanitizeFileName
 };

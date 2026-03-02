@@ -1,88 +1,105 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const logger = require('../utils/logger');
-const { saveTextDocument } = require('../utils/fileSaver');
+const { saveTextDocument, saveRawFile } = require('../utils/fileSaver');
 const { fetchWithRetry, wait } = require('../utils/requestManager');
+const registry = require('../utils/registry');
 
-const SENADO_BASE_URL = 'http://www.secretariasenado.gov.co';
-const SENADO_HOME_URL = `${SENADO_BASE_URL}/senado/basedoc/arbol/1000.html`;
+// Directorio raíz de normatividad del Senado
+const SENADO_HOME_URL = 'http://www.secretariasenado.gov.co/senado/basedoc/arbol/1000.html';
 const ENTITY_NAME = 'senado';
 
 /**
- * Función principal para ejecutar el scraper del Senado.
- * Este sitio típicamente usa frames o estructuras iterativas
- * en el "árbol". Vamos a extraer los enlaces base primero.
+ * Función recursiva que explora carpetas y documentos.
+ * En Senado, en lugar de paginación lineal, es un árbol de enlaces.
  */
+async function exploreSenadoRecursively(page, url, depth = 0) {
+    if (depth > 2) return; // Limitar profundidad en el MVP para no hacer un crawler infinito en pruebas. Quitar `depth` limit en prod.
+
+    if (registry.isDownloaded(url)) {
+        logger.info(`Ignorando URL ya explorada: ${url}`);
+        return;
+    }
+
+    logger.info(`🏛️ [Senado Nivel ${depth}] Explorando: ${url}`);
+
+    try {
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 50000 });
+
+        // Obtener todos los enlaces de esta página/carpeta
+        const links = await page.evaluate(() => {
+            const anchorTags = Array.from(document.querySelectorAll('a'));
+            return anchorTags
+                .map(a => ({ text: a.innerText.trim(), href: a.href }))
+                .filter(a => a.href && a.text && a.href.includes('/senado/basedoc/'));
+        });
+
+        const uniqueLinks = [...new Map(links.map(item => [item.href, item])).values()];
+
+        for (const link of uniqueLinks) {
+            // Si es un índice o carpeta, recursividad
+            if (link.href.endsWith('.html') && link.href.includes('/arbol/')) {
+                await exploreSenadoRecursively(page, link.href, depth + 1);
+            }
+            // Si es un documento específico (ej. un .html directo de una ley o un .doc)
+            else if (!registry.isDownloaded(link.href)) {
+                logger.info(`Descargando Ley/Norma Senado: ${link.text} -> ${link.href}`);
+
+                const isPdf = link.href.toLowerCase().includes('.pdf');
+                const isDoc = link.href.toLowerCase().match(/\.(doc|docx)$/);
+
+                const docResponse = await fetchWithRetry(link.href, {}, (isPdf || isDoc) ? 'arraybuffer' : 'text');
+
+                if (docResponse && docResponse.data) {
+                    const extension = isPdf ? '.pdf' : (isDoc ? isDoc[0] : null);
+
+                    if (extension || (docResponse.headers['content-type'] && docResponse.headers['content-type'].includes('application/pdf'))) {
+                        const fileExt = extension || '.pdf';
+                        const saved = saveRawFile(ENTITY_NAME, link.text, fileExt, docResponse.data);
+                        if (saved) registry.markAsDownloaded(link.href);
+                    } else if (typeof docResponse.data === 'string') {
+                        const $ = cheerio.load(docResponse.data);
+                        const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+
+                        if (bodyText) {
+                            const saved = saveTextDocument(ENTITY_NAME, link.text, bodyText);
+                            if (saved) registry.markAsDownloaded(link.href);
+                        }
+                    }
+                }
+                await wait(2000); // Rate Limiting
+            }
+        }
+
+        // Marcar la carpeta/índice en sí como visitada
+        registry.markAsDownloaded(url);
+
+    } catch (error) {
+        logger.error(`Error explorando URL del Senado: ${url} - ${error.message}`);
+    }
+}
+
 async function run() {
-    logger.info(`🏛️ Iniciando scraper para: ${ENTITY_NAME.toUpperCase()}`);
+    logger.info(`🏛️ Iniciando scraper (V2) para: ${ENTITY_NAME.toUpperCase()}`);
     let browser = null;
 
     try {
-        // Lanzamos Puppeteer en modo headless "new" (mejor rendimiento)
         browser = await puppeteer.launch({
             headless: 'new',
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
 
         const page = await browser.newPage();
-
-        // Simular User Agent real para evitar bloqueos
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
 
-        logger.info(`Navegando a la página principal: ${SENADO_HOME_URL}`);
-
-        // Timeout de navegación amplio porque a veces las webs gubernamentales son lentas
-        await page.goto(SENADO_HOME_URL, { waitUntil: 'networkidle2', timeout: 60000 });
-
-        // Extraer los enlaces de interés en la página principal
-        const links = await page.evaluate(() => {
-            const anchorTags = Array.from(document.querySelectorAll('a'));
-            return anchorTags
-                .map(a => ({
-                    text: a.innerText.trim(),
-                    href: a.href
-                }))
-                .filter(a => a.href && a.text && a.href.includes('/senado/basedoc/'));
-        });
-
-        logger.info(`Se encontraron ${links.length} enlaces principales en el directorio raíz.`);
-
-        // Tomaremos los primeros 3 para probar la lógica de guardado sin saturar
-        const testLinks = links.slice(0, 3);
-
-        for (const link of testLinks) {
-            logger.info(`Procesando documento: ${link.text} -> ${link.href}`);
-
-            // Hacemos una petición limpia al documento usando nuestro requestManager (Axios)
-            // porque ya tenemos la URL directa y es más rápido que navegar con puppeteer.
-            const response = await fetchWithRetry(link.href);
-
-            if (response && response.data) {
-                // Cheerio para buscar el texto real del documento, limpiando HTML
-                const $ = cheerio.load(response.data);
-
-                // Muchas veces el texto está en body o div.WordSection1 (en Word a HTML)
-                const bodyText = $('body').text()
-                    .replace(/\s+/g, ' ') // Quita múltiples espacios
-                    .trim();
-
-                if (bodyText) {
-                    saveTextDocument(ENTITY_NAME, link.text, bodyText);
-                } else {
-                    logger.warn(`No se pudo extraer texto claro de: ${link.text}`);
-                }
-            }
-
-            // Esperar un tiempo prudencial entre documentos (Rate Limiting Ético)
-            await wait(2000);
-        }
+        await exploreSenadoRecursively(page, SENADO_HOME_URL, 0);
 
     } catch (error) {
         logger.error(`Error crítico en scraper ${ENTITY_NAME}: ${error.stack}`);
     } finally {
         if (browser) {
             await browser.close();
-            logger.info('Navegador Puppeteer cerrado.');
+            logger.info('Navegador Puppeteer cerrado para Senado.');
         }
     }
 }

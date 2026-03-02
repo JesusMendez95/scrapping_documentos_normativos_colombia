@@ -1,20 +1,20 @@
 const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const logger = require('../utils/logger');
-const { saveTextDocument } = require('../utils/fileSaver');
-const { wait } = require('../utils/requestManager');
+const { saveTextDocument, saveRawFile } = require('../utils/fileSaver');
+const { fetchWithRetry, wait } = require('../utils/requestManager');
+const registry = require('../utils/registry');
 
-const INVIMA_HOME_URL = 'https://www.invima.gov.co/';
+// La sección de normatividad principal suele tener paginación
+const INVIMA_HOME_URL = 'https://www.invima.gov.co/normatividad';
 const ENTITY_NAME = 'invima';
 
 /**
  * Función principal para ejecutar el scraper de INVIMA.
- * Las alertas sanitarias y normatividades de Invima pueden estar
- * ocultas bajo JS pesado, por tanto, usaremos Puppeteer aquí también
- * asegurando la carga completa de elementos dinámicos.
+ * Manejo de Paginación dinámica y documentos embebidos.
  */
 async function run() {
-    logger.info(`💊 Iniciando scraper para: ${ENTITY_NAME.toUpperCase()}`);
+    logger.info(`💊 Iniciando scraper (V2) para: ${ENTITY_NAME.toUpperCase()}`);
     let browser = null;
 
     try {
@@ -26,61 +26,88 @@ async function run() {
         const page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
 
-        logger.info(`Navegando a: ${INVIMA_HOME_URL}`);
+        let currentPageUrl = INVIMA_HOME_URL;
+        let pageNum = 1;
 
-        await page.goto(INVIMA_HOME_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+        while (currentPageUrl) {
+            logger.info(`📄 [INVIMA] Navegando a página ${pageNum}: ${currentPageUrl}`);
+            await page.goto(currentPageUrl, { waitUntil: 'networkidle2', timeout: 60000 });
 
-        // Extraer enlaces relevantes simulando cómo el navegador ve el DOM final renderizado
-        const links = await page.evaluate(() => {
-            const anchorTags = Array.from(document.querySelectorAll('a'));
-            return anchorTags
-                .map(a => ({
-                    text: a.innerText.trim(),
-                    href: a.href
-                }))
-                .filter(a => {
-                    if (!a.href || !a.text) return false;
-                    const url = a.href.toLowerCase();
-                    const title = a.text.toLowerCase();
-                    // Invima tiene normatividad, resoluciones, circulares y alertas alimentarias/medicamentos
-                    return url.includes('normatividad') ||
-                        url.includes('resolucion') ||
-                        url.includes('circular') ||
-                        title.includes('resolución') ||
-                        title.includes('circular');
-                });
-        });
+            // Extraer enlaces de documentos de la página actual
+            const links = await page.evaluate(() => {
+                const anchorTags = Array.from(document.querySelectorAll('a'));
+                return anchorTags
+                    .map(a => ({ text: a.innerText.trim(), href: a.href }))
+                    .filter(a => {
+                        if (!a.href || !a.text) return false;
+                        const url = a.href.toLowerCase();
+                        // Filtrar por extensiones directamente o palabras clave
+                        return url.includes('.pdf') || url.includes('.doc') || url.includes('resolucion') || url.includes('circular');
+                    });
+            });
 
-        // Filtrar URLs únicas
-        const uniqueLinks = [...new Map(links.map(item => [item.href, item])).values()];
-        logger.info(`Se encontraron ${uniqueLinks.length} documentos normativos en portada Invima.`);
+            // Filtrar y revisar caché
+            const uniqueLinks = [...new Map(links.map(item => [item.href, item])).values()]
+                .filter(link => !registry.isDownloaded(link.href));
 
-        const testLinks = uniqueLinks.slice(0, 2);
+            logger.info(`Se encontraron ${uniqueLinks.length} documentos *NUEVOS* en la página ${pageNum}.`);
 
-        for (const link of testLinks) {
-            logger.info(`Extrayendo documento Invima: ${link.text} -> ${link.href}`);
+            for (const link of uniqueLinks) {
+                logger.info(`Extrayendo Invima: ${link.text || 'Documento'} -> ${link.href}`);
 
-            // Navegamos directamente al documento con Puppeteer en caso de que esté protegido (DDoS protect, etc)
-            try {
-                await page.goto(link.href, { waitUntil: 'networkidle2', timeout: 45000 });
+                const isPdf = link.href.toLowerCase().includes('.pdf');
+                const isDoc = link.href.toLowerCase().match(/\.(doc|docx)$/);
 
-                const pageContent = await page.content();
-                const $ = cheerio.load(pageContent);
+                // Intento de descarga híbrida
+                if (isPdf || isDoc || link.href.includes('/documentos/')) {
+                    // Descarga directa binaria sin Puppeteer (mucho más rápido y estable)
+                    const docResponse = await fetchWithRetry(link.href, {}, 'arraybuffer');
 
-                // Texto puro
-                const mainText = $('body').text().replace(/\s+/g, ' ').trim();
-
-                if (mainText.length > 50) {
-                    saveTextDocument(ENTITY_NAME, link.text, mainText);
+                    if (docResponse && docResponse.data) {
+                        const extension = isPdf ? '.pdf' : (isDoc ? isDoc[0] : null);
+                        if (extension || (docResponse.headers['content-type'] && docResponse.headers['content-type'].includes('application/pdf'))) {
+                            const fileExt = extension || '.pdf';
+                            const saved = saveRawFile(ENTITY_NAME, link.text, fileExt, docResponse.data);
+                            if (saved) registry.markAsDownloaded(link.href);
+                        }
+                    }
                 } else {
-                    logger.warn(`No se pudo leer texto del documento Invima: ${link.href}`);
+                    // Si es HTML, usar Puppeteer por si requiere JS rendering
+                    try {
+                        await page.goto(link.href, { waitUntil: 'networkidle2', timeout: 45000 });
+                        const pageContent = await page.content();
+                        const $ = cheerio.load(pageContent);
+                        const mainText = $('body').text().replace(/\s+/g, ' ').trim();
+
+                        if (mainText.length > 50) {
+                            const saved = saveTextDocument(ENTITY_NAME, link.text, mainText);
+                            if (saved) registry.markAsDownloaded(link.href);
+                        }
+                    } catch (navError) {
+                        logger.error(`Error navegando al HTML de Invima (${link.href}): ${navError.message}`);
+                    }
                 }
 
-            } catch (navError) {
-                logger.error(`Error navegando al documento de Invima (${link.href}): ${navError.message}`);
+                await wait(3000);
             }
 
-            await wait(3000);
+            // Paginación: Buscar botón de siguiente página
+            const nextLinkElement = await page.$('ul.pagination li.active + li a'); // Estrategia común de Bootstrap (li active seguido de li a)
+
+            if (nextLinkElement) {
+                const nextHref = await page.evaluate(el => el.href, nextLinkElement);
+                if (nextHref && nextHref !== currentPageUrl) {
+                    currentPageUrl = nextHref;
+                    pageNum++;
+                    logger.info(`➡️ Pasando a página Invima (${pageNum})...`);
+                    await wait(5000);
+                } else {
+                    currentPageUrl = null;
+                }
+            } else {
+                logger.info('🏁 No se encontró botón siguiente página. Crawling Invima finalizado.');
+                currentPageUrl = null;
+            }
         }
 
     } catch (error) {
