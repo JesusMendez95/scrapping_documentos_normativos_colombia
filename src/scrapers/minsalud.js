@@ -4,7 +4,7 @@ const { saveTextDocument, saveRawFile } = require('../utils/fileSaver');
 const { fetchWithRetry, wait } = require('../utils/requestManager');
 const registry = require('../utils/registry');
 
-const MINSALUD_HOME_URL = 'https://www.minsalud.gov.co/Normatividad/Paginas/Resoluciones.aspx'; // Usando URL directa de resoluciones para la fase 2
+const MINSALUD_HOME_URL = 'https://www.minsalud.gov.co/Portada/index.html';
 const ENTITY_NAME = 'minsalud';
 
 /**

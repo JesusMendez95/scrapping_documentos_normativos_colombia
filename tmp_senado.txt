@@ -1,0 +1,319 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<HTML xmlns="http://www.w3.org/1999/xhtml" lang="es">
+<HEAD>
+	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+	<meta name="Author" content="Avance Jurídico Casa Editorial Ltda."> 
+	<meta name="Publisher" content="Senado de la República de Colombia"> 
+	<meta name="Copyright" content="© Avance Jurídico Casa Editorial Ltda., Senado de la República de Colombia"> 
+	<meta name="Revisit-After" content="3 days"> 
+	<meta name="Keywords" content="SENADO DE LA REPUBLICA, Leyes, Vigencia expresa"> 
+	<meta name="Description" content="Leyes desde 1992 - Vigencia Expresa y Sentencias de Constitucionalidad. Senado de la República de Colombia"> 
+	<meta name="Pagetopic" content="Legal"> 
+	<meta name="Pagetype" content="Book"> 
+	<meta name="Audience" content=" All"> 
+	<meta name="Robots" content="all"> 
+	<meta name="Content-Language" content="Spanish"> 
+	<!-- <link rel="shortcut icon" type="image/x-icon" href="http://www.cancilleria.gov.co/sites/default/files/framework_favicon.ico"> -->
+<!-- Inicio JDC -->
+		<link rel="stylesheet" type="text/css" href="/../../../../../../senado/basedoc/scripts/resources/css/ext-all.css" />
+        <script type="text/javascript" src="/../../../../../../senado/basedoc/scripts/adapter/ext/ext-base.js"></script>
+        <script type="text/javascript" src="/../../../../../../senado/basedoc/scripts/ext-all.js"></script>		
+		<script type="text/javascript" src="/../../../../../../senado/basedoc/js/buscador.js"></script>
+		<script language="javascript" type="text/javascript">
+			<!--
+			function pulsar(e) {
+				tecla = (document.all) ? e.keyCode : e.which;
+				return (tecla != 13);
+			}
+			//-->
+		</script>
+		<!-- Fin JDC -->	
+	<title>Leyes desde 1992 - Vigencia expresa y control de constitucionalidad</title> <!-- Ajustado AJ - Nuevo -->
+    <style type="text/css">
+      <!--
+      	body {
+      	text-align: justify;
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 12px;
+          font-weight: normal;
+      	color: #4B4949;
+      	}
+      
+      	p {
+      	text-align: justify; 
+          font-family: Arial, Helvetica, sans-serif; 
+          font-size: 12px;
+      	line-height: 18px;
+      	}
+      
+      		a {
+            	color: #0073FF;
+            	text-decoration: none;
+            	}
+            
+            	a:hover {
+      		color: #FFC833;
+            	text-decoration: underline;
+            	}
+      
+      	a.antsig {
+          font-family: Arial, Helvetica, sans-serif;
+          font-size: 10px;
+          font-weight: normal;
+          text-align: center;
+          color: #fea500;
+      	}
+      
+      	s{
+            	color: #c00000;
+      	}
+      
+      	.b_aj {
+            	font-weight: bold;
+            	color: #9a146d;
+      	}
+      
+      	.i_aj {
+      	font-style: italic;
+      	}
+      
+      	.bi_aj {
+      	font-weight: bold;
+      	font-style: italic;
+      	color: #004C91;
+      	}
+      
+      	#aj_data {
+      	width:600px;
+      	float:left;
+      	padding-top:10px;     
+      	padding-bottom:10px;
+      	text-align: justify;
+      	}
+      
+      	#aj_data_arbol {
+      	width:600px;
+      	float:left;
+      	font-size: 11px;
+      	margin-top: -10px;
+      	margin-bottom: 2px;
+      	padding-top:2px;     
+      	padding-bottom:2px;
+      	line-height: 120%;
+      	font-size: 11px; 
+      	text-align: justify;
+      	}
+      
+      	html>body #aj_data {
+      	margin-left:0px;
+      	margin-right:0px;     
+      	}
+      
+      	.art {
+      	margin-right:20px;     
+      	}
+      
+      	.hlk_inicio {
+          color: #007900;
+          text-decoration: none;
+          float:left;
+          padding-left:20px;     
+          padding-right:20px;     
+          padding-top:4px;     
+          font-size: 10px; 
+      	}
+      
+      	#logo_aj {
+      	font-family: Verdana, Arial, Helvetica, sans-serif;
+      	font-size: 8px;
+      	width:400px;
+      	float:left;
+      	padding-left:20px;     
+      	padding-right:20px;     
+      	padding-top:4px;     
+      	padding-bottom:4px;
+      	BORDER-LEFT: gray 1px solid; 
+      	BORDER-RIGHT: gray 1px solid; 
+      	BORDER-TOP: gray 1px solid; 
+      	BORDER-BOTTOM: gray 1px solid; 
+      	}
+      
+      	html>body #logo_aj {
+      	margin-left:30px;
+      	margin-right:20px;     
+      	margin-top:20px;     
+      	margin-bottom:20px;     
+      	}
+      
+      	.arbol_rutas {
+          color: #AAAAAA;
+          font-family: Arial, Verdana, Helvetica, sans-serif;
+          font-size: 10px; 
+            	}
+      
+      	.arbol_rama {
+            	font-family: Arial, Helvetica, sans-serif;
+            	font-weight: bold;
+            	color: #000000; 
+            	padding-top: 5px; 
+            	padding-bottom: 5px; 
+            	text-decoration: none;
+            	text-align:justify;
+            	}
+      
+      	.arbol_doc {
+            	font-family: Arial, Helvetica, sans-serif; 
+            	padding-top: 5px; 
+            	padding-bottom: 5px; 
+            	text-decoration: none;
+            	text-align:justify;
+      	}
+      
+      	.arbol_link {
+      	font-family: Open Sans, Arial, Arial Unicode MS, Helvetica, sans-serif;
+          font-weight: bold;
+          color: #be9e55; 
+          padding-top: 5px; 
+          padding-bottom: 5px; 
+          text-decoration: none;
+          text-align:justify;
+      	}
+      	
+      	#update_date {
+      		background-color: #FFFF00;
+          	color: #000000;
+          	font-family: Open Sans, Arial, Arial Unicode MS, Helvetica, sans-serif;
+           	font-size: 11px;
+            	font-weight: bold;
+            	width:400px;
+            	float:left;
+            	padding-left:20px;     
+            	padding-right:20px;     
+            	padding-top:4px;     
+            	padding-bottom:10px;
+            	BORDER-LEFT: gray 1px solid; 
+            	BORDER-RIGHT: gray 1px solid; 
+            	BORDER-TOP: gray 1px solid; 
+            	BORDER-BOTTOM: gray 1px solid; 
+      		   	}
+          #selector_aj {
+            	width:600px;
+            	float:right;
+            	}
+      -->
+    </style>
+</HEAD>
+<BODY>
+	<div id="aj_data">
+		<div id="update_date">
+			<div>
+			&Uacute;ltima actualizaci&oacute;n: 9 de febrero de 2026 - (Diario Oficial No. 53.387 - 3 de febrero de 2026)<br/>
+			Derechos de autor reservados - Prohibida su reproducción
+			</div>
+		</div>
+<!-- Inicio JDC -->
+	<form name="formbuscar" method="post" action="">	
+		<table width="500px" border="0" cellspacing="0" cellpadding="4">
+			<tr>
+				<td valign="center">
+					<p>Buscar:  </p>
+				</td>
+				<td valign="center">
+					<input class="InputBox" type="text" size="40" name="search" id="search" onkeypress = "return pulsar(event)"/>
+				</td>
+			</tr>										
+			<tr>
+				<td>
+				</td>
+				<td valign="bottom" align="right">
+					<a href="http://normograma.info/senado/buscador/Buscador.aspx">B&uacute;squeda avanzada</a>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<!-- Fin JDC -->
+<div id="aj_data_arbol">
+<!--Inicio documento-->
+<table width="100%" border="0" cellspacing="0" cellpadding="4">
+<tr>
+  <td colspan="2"><span class="arbol_rama">DOCUMENTOS - ESTRUCTURA TEMÁTICA</span></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="1001.html">CONSTITUCIÓN POLÍTICA</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="1183.html">LEYES : POR ORDEN CRONOLÓGICO</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="3784.html">LEYES : POR TIPO</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="7616.html">CÓDIGOS Y ESTATUTOS NACIONALES</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="7664.html">OTROS DECRETOS QUE MODIFICAN LEYES DESDE 1992</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="8298.html">JURISPRUDENCIA</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="16009.html">REGLAMENTOS</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="16011.html">DIRECTIVAS</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" ="16017.html">LISTADOS DE REFERENCIAS</a></td>
+</tr>
+</table>
+<table width="100%" border="0" cellspacing="0" cellpadding="4">
+<tr>
+  <td colspan="2"><span class="arbol_rama">DOCUMENTOS POR TIPO, ENTIDAD Y ORDEN CRONOLÓGICO</span></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="16020.html">ACTOS LEGISLATIVOS</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="16112.html">CÓDIGOS</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="16141.html">CONSTITUCIÓN POLÍTICA</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="16143.html">CORTE SUPREMA DE JUSTICIA</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="16328.html">DECRETOS</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="17772.html">DIRECTIVAS</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="17784.html">ESTATUTOS GENERALES</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="17799.html">LEYES</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" ="20375.html">LISTADOS DE REFERENCIAS</a></td>
+</tr>
+<tr>
+  <td width="5%"> </td><td><a class="arbol_link" href="20377.html">REGLAMENTOS</a></td>
+</tr>
+</table>
+<!--Fin documento-->
+</div>
+		<!--Inicio LogoAJ -->
+		<div id="logo_aj">
+			<div><img src="../../images/compiladopor.gif" width="100" height="25" alt="logoaj"/></div>
+			<div>Disposiciones analizadas por Avance Jur&iacute;dico Casa Editorial S.A.S.©<br />
+			"Leyes desde 1992 - Vigencia Expresa y Sentencias de Constitucionalidad"<br />
+			ISSN [1657-6241 (En linea)]<br />
+			&Uacute;ltima actualizaci&oacute;n: 9 de febrero de 2026 - (Diario Oficial No. 53.387 - 3 de febrero de 2026)<br />
+			<p>Las notas de vigencia, concordancias, notas del editor, forma de presentación y disposición de la compilación están protegidas por las normas sobre derecho de autor. En relación con estos valores jurídicos agregados, se encuentra prohibido por la normativa vigente su aprovechamiento en publicaciones similares y con fines comerciales, incluidas -pero no únicamente- la copia, adaptación, transformación, reproducción, utilización y divulgación masiva, así como todo otro uso prohibido expresamente por la normativa sobre derechos de autor, que sea contrario a la normativa sobre promoción de la competencia o que requiera autorización expresa y escrita de los autores y/o de los titulares de los derechos de autor. En caso de duda o solicitud de autorización puede comunicarse al teléfono 617-0729 en Bogotá, extensión 101. El ingreso a la página supone la aceptación sobre las normas de uso de la información aquí contenida. <p/>
+			</div>
+		</div>
+		<!--Fin LogoAJ -->
+	</div>
+</BODY>
+</HTML>

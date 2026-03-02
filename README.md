@@ -22,7 +22,7 @@ Este proyecto está desarrollado íntegramente en **JavaScript** (Node.js) utili
 ### Arquitectura de Extracción a Gran Escala (V2)
 - 💾 **Gestión de Estado y Caché (Registry)**: Integra un administrador de descargas persistente (`registry.json`) que registra cada URL analizada y descargada. Esto permite detener, pausar o enfrentar fallas de red **reanudando la extracción directamente desde el punto exacto donde falló**, sin descargas redundantes.
 - 📂 **Multi-Formato**: Análisis inteligente de `Content-Type` para guardar el archivo binario crudo (`PDF`, `DOCX`) siempre que esté disponible, reservando el procesamiento web scraping HTML para generar archivos de texto plano (`.txt`).
-- 🤖 **Deep Crawling**: Cada módulo navega de forma autónoma a lo largo de docenas de páginas de paginación (`MinTrabajo`, `MinSalud`, `Invima`), y profundiza de manera recursiva (DFS) en directorios jerárquicos (`Senado`).
+- 🤖 **Deep Crawling**: Cada módulo navega de forma autónoma a lo largo de docenas de páginas de paginación (`MinTrabajo`, `MinSalud`, `Invima`), y profundiza de manera recursiva (DFS) en directorios jerárquicos (`Senado`). *(Senado optimizado con Axios/Cheerio puro para evasión de bloqueos `ERR_BLOCKED_BY_CLIENT`)*.
 
 ### Criterios de Scraping Ético Implementados:
 - **Control de Peticiones (`Rate Limiting`)**: Pausas aleatorias y tiempos de espera controlados entre solicitudes para no saturar los servidores gubernamentales.

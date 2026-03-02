@@ -1,4 +1,3 @@
-const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 const logger = require('../utils/logger');
 const { saveTextDocument, saveRawFile } = require('../utils/fileSaver');
@@ -13,9 +12,7 @@ const ENTITY_NAME = 'senado';
  * Función recursiva que explora carpetas y documentos.
  * En Senado, en lugar de paginación lineal, es un árbol de enlaces.
  */
-async function exploreSenadoRecursively(page, url, depth = 0) {
-    if (depth > 2) return; // Limitar profundidad en el MVP para no hacer un crawler infinito en pruebas. Quitar `depth` limit en prod.
-
+async function exploreSenadoRecursively(url, depth = 0) {
     if (registry.isDownloaded(url)) {
         logger.info(`Ignorando URL ya explorada: ${url}`);
         return;
@@ -24,14 +21,39 @@ async function exploreSenadoRecursively(page, url, depth = 0) {
     logger.info(`🏛️ [Senado Nivel ${depth}] Explorando: ${url}`);
 
     try {
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 50000 });
+        const response = await fetchWithRetry(url);
+        if (!response || !response.data) {
+            logger.warn(`No se pudo cargar la URL del Senado: ${url}`);
+            return;
+        }
 
-        // Obtener todos los enlaces de esta página/carpeta
-        const links = await page.evaluate(() => {
-            const anchorTags = Array.from(document.querySelectorAll('a'));
-            return anchorTags
-                .map(a => ({ text: a.innerText.trim(), href: a.href }))
-                .filter(a => a.href && a.text && a.href.includes('/senado/basedoc/'));
+        const $ = cheerio.load(response.data);
+        const links = [];
+
+        // Obtener la ruta base actual para armar URLs relativas correctamente
+        const currentUrlObj = new URL(url);
+        const basePath = currentUrlObj.pathname.substring(0, currentUrlObj.pathname.lastIndexOf('/') + 1);
+        const baseUrl = `${currentUrlObj.protocol}//${currentUrlObj.host}${basePath}`;
+
+        $('a').each((i, el) => {
+            const href = $(el).attr('href');
+            const text = $(el).text().trim();
+
+            if (href && !href.startsWith('javascript') && !href.startsWith('#')) {
+                let fullUrl = '';
+                if (href.startsWith('http')) {
+                    fullUrl = href;
+                } else if (href.startsWith('/')) {
+                    fullUrl = `${currentUrlObj.protocol}//${currentUrlObj.host}${href}`;
+                } else {
+                    fullUrl = `${baseUrl}${href}`;
+                }
+
+                // Asegurar que nos mantenemos dentro del Senado y evitamos links muertos
+                if (fullUrl.includes('/senado/basedoc/')) {
+                    links.push({ text: text || 'Doc_Senado', href: fullUrl });
+                }
+            }
         });
 
         const uniqueLinks = [...new Map(links.map(item => [item.href, item])).values()];
@@ -39,7 +61,7 @@ async function exploreSenadoRecursively(page, url, depth = 0) {
         for (const link of uniqueLinks) {
             // Si es un índice o carpeta, recursividad
             if (link.href.endsWith('.html') && link.href.includes('/arbol/')) {
-                await exploreSenadoRecursively(page, link.href, depth + 1);
+                await exploreSenadoRecursively(link.href, depth + 1);
             }
             // Si es un documento específico (ej. un .html directo de una ley o un .doc)
             else if (!registry.isDownloaded(link.href)) {
@@ -58,8 +80,8 @@ async function exploreSenadoRecursively(page, url, depth = 0) {
                         const saved = saveRawFile(ENTITY_NAME, link.text, fileExt, docResponse.data);
                         if (saved) registry.markAsDownloaded(link.href);
                     } else if (typeof docResponse.data === 'string') {
-                        const $ = cheerio.load(docResponse.data);
-                        const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+                        const $doc = cheerio.load(docResponse.data);
+                        const bodyText = $doc('body').text().replace(/\s+/g, ' ').trim();
 
                         if (bodyText) {
                             const saved = saveTextDocument(ENTITY_NAME, link.text, bodyText);
@@ -81,26 +103,10 @@ async function exploreSenadoRecursively(page, url, depth = 0) {
 
 async function run() {
     logger.info(`🏛️ Iniciando scraper (V2) para: ${ENTITY_NAME.toUpperCase()}`);
-    let browser = null;
-
     try {
-        browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
-
-        const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
-
-        await exploreSenadoRecursively(page, SENADO_HOME_URL, 0);
-
+        await exploreSenadoRecursively(SENADO_HOME_URL, 0);
     } catch (error) {
         logger.error(`Error crítico en scraper ${ENTITY_NAME}: ${error.stack}`);
-    } finally {
-        if (browser) {
-            await browser.close();
-            logger.info('Navegador Puppeteer cerrado para Senado.');
-        }
     }
 }
 
