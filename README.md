@@ -25,11 +25,37 @@ Este proyecto está desarrollado íntegramente en **JavaScript** (Node.js) utili
 - **Manejo de Errores y Reintentos (Retries)**: Sistema resiliente que maneja respuestas 4xx o 5xx sin afectar la ejecución general ni impactar a los servidores.
 - **Caché y Verificación de Duplicados**: Prevención de descargas redundantes, garantizando la optimización de ancho de banda propio y de terceros.
 
-## 📋 Próximos Pasos (Roadmap)
-- [ ] Configuración del entorno base y `package.json`.
-- [ ] Implementación de la capa de control de concurrencia y peticiones.
-- [ ] Desarrollo de los parsers específicos por cada entidad (Senado, MinTrabajo, MinSalud e Invima).
-- [ ] Módulo de exportación, normalización y guardado en archivos en `.txt`.
+## 📋 Estado del Proyecto (Roadmap)
+- [x] Configuración del entorno base y `package.json`.
+- [x] Implementación de la capa de control de concurrencia y peticiones.
+- [x] Desarrollo de los parsers específicos por cada entidad (Senado, MinTrabajo, MinSalud e Invima).
+- [x] Módulo de exportación, normalización y guardado en archivos en `.txt`.
 
-## ⚙️ Uso
-> *Se actualizará con las instrucciones de instalación y ejecución a medida que se estructure el código.*
+## ⚙️ Requisitos e Instalación
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/JesusMendez95/scrapping_documentos_normativos_colombia.git
+   cd scrapping_documentos_normativos_colombia
+   ```
+
+2. **Instalar dependencias:**
+   Asegúrate de tener [Node.js](https://nodejs.org/) instalado.
+   ```bash
+   npm install
+   ```
+   *Nota: Dado que el proyecto usa Puppeteer, la instalación descargará un navegador Chromium de forma automática.*
+
+## 🚀 Uso
+
+Para iniciar el proceso global de extracción, simplemente ejecuta en la raíz del proyecto:
+
+```bash
+node src/index.js
+```
+
+### ¿Qué sucederá?
+1. El script inicializará la recolección de manera secuencial (por defecto, configurada para no saturar tu red local ni los servidores destino).
+2. Podrás monitorear el progreso a través de la consola gracias a `Winston Logger`.
+3. Todos los documentos extraídos como texto puro `.txt` se guardarán automáticamente en la carpeta `output/` (la cual es ignorada en Git de manera intencional), organizados por la entidad gubernamental de origen.
+4. Se generarán logs detallados del proceso en `output/scraper.log` y `output/error.log`.

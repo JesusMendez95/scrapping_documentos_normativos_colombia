@@ -1,0 +1,16 @@
+# Dependencias de Node
+node_modules/
+
+# Logs generados por Winston
+*.log
+logs/
+
+# Carpeta de salida de documentos normativos (archivos .txt descargados)
+output/
+
+# Variables de entorno
+.env
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
